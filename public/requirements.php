@@ -28,7 +28,7 @@ if (version_compare(phpversion('phalcon'), PHALCON_VERSION_REQUIRED, '<')) {
     printf('Phalcon Framework %s is required, you have %s.', PHALCON_VERSION_REQUIRED, phpversion('phalcon'));
     exit(1);
 }
-if (php_sapi_name() !== 'cli' && !in_array('mod_rewrite', apache_get_modules())) {
+if (php_sapi_name() !== 'cli' && function_exists('apache_get_modules') && !in_array('mod_rewrite', apache_get_modules())) {
     print('Apache "mod_rewrite" module is required!');
     exit(1);
 }
@@ -36,7 +36,7 @@ if (php_sapi_name() !== 'cli' && !in_array('mod_rewrite', apache_get_modules()))
 $checkPath = array(
     $this->_config->application->assets->local,
     $this->_config->application->logger->path,
-    $this->_config->application->cache->cacheDir,
+    $this->_config->application->cache->get('cacheDir') ? $this->_config->application->cache->cacheDir : null,
     $this->_config->application->view->compiledPath,
     $this->_config->application->metadata->metaDataDir,
     $this->_config->application->annotations->annotationsDir,
@@ -49,6 +49,9 @@ $GLOBALS['PATH_REQUIREMENTS'] = $checkPath;
 $allPassed = true;
 
 foreach ($checkPath as $path) {
+    if ($path === null) {
+        continue;
+    }
     $is_writable = is_writable($path);
     if (!$is_writable) {
         echo "{$path} isn't writable.</br>";
